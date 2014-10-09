@@ -1,0 +1,13 @@
+#!/bin/bash
+
+term="$@"
+term=${term// /%20}
+
+(
+	echo '<html><body>'
+
+	curl -s "http://synonyme.woxikon.de/synonyme/$term.php" |
+	sed '/div class="synonymsFrame/d; /<div class="aligncenter"/,$d'
+
+	echo '</body></html>'
+) | TERM=vt100 elinks /dev/stdin

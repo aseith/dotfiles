@@ -1,0 +1,231 @@
+#!/usr/bin/env python2.7
+# coding: utf-8
+
+# ------------------------------------------------------------------
+# "THE PIZZA-WARE LICENSE" (Revision 42):
+# Peter Hofmann <pcode@uninformativ.de> wrote this file. As long as you
+# retain this notice you can do whatever you want with this stuff. If
+# we meet some day, and you think this stuff is worth it, you can buy
+# me a pizza in return.
+# ------------------------------------------------------------------
+
+import curses
+import datetime
+from optparse import OptionParser
+
+def val(*a):
+    """Read current byte count from '/sys'."""
+
+    with open('/sys/class/net/%s/statistics/%sx_bytes' % a, 'r') as fp:
+        return int(fp.read().strip())
+
+def noerror(f, *args):
+    """Run a function but ignore curses.error.
+
+    This function is meant to be wrapper for drawing functions. Those
+    functions raise a harmless exception if the terminal is too small."""
+    try:
+        f(*args)
+    except curses.error:
+        pass
+
+def monitor(win, iface, user_max_t, user_max_r, time_delta, asym):
+    """Monitors 'iface' and draws graphs. Curses main loop."""
+
+    # Init colors.
+    curses.use_default_colors()
+    curses.init_pair(1, curses.COLOR_RED, -1)
+    curses.init_pair(2, curses.COLOR_GREEN, -1)
+
+    # Make cursor invisible and calls to getch() non-blocking.
+    curses.curs_set(False)
+    win.nodelay(1)
+
+    # Fixed values.
+    maxelements = 10000
+
+    # Initial values.
+    last_t = val(iface, 't')
+    last_t_time = datetime.datetime.now()
+    first_t = last_t
+    last_r = val(iface, 'r')
+    last_r_time = datetime.datetime.now()
+    first_r = last_r
+    speeds_t = [0]
+    speeds_r = [0]
+    speeds_max_t = 0
+    speeds_max_r = 0
+    d_t = 0
+    d_r = 0
+
+    while True:
+        ch = win.getch()
+
+        # Quit on 'q', force re-read on all other keys (see below).
+        if ch in [ord('Q'), ord('q')]:
+            return
+
+        # We ignore some "keys".
+        if ch == curses.KEY_MOUSE or ch == curses.KEY_RESIZE:
+            ch = -1
+
+        # If you hold a key, it will accumulate in the buffer and thus
+        # it will cause "ch" to be != -1 for a long period of time.
+        # Flush the buffer after we've read one character to avoid this.
+        curses.flushinp()
+
+        win.erase()
+
+        # Refresh terminal size.
+        (height, width) = win.getmaxyx()
+
+        # Get current values and calculate delta. Add new delta to list.
+        now_t = val(iface, 't')
+        now_t_time = datetime.datetime.now()
+        now_r = val(iface, 'r')
+        now_r_time = datetime.datetime.now()
+        d_t_time = (now_t_time - last_t_time).total_seconds()
+        d_r_time = (now_r_time - last_r_time).total_seconds()
+
+        if d_t_time > time_delta or ch != -1:
+            # New delta.
+            d_t = float(now_t - last_t) / d_t_time
+            d_r = float(now_r - last_r) / d_r_time
+
+            # Add new values.
+            speeds_t = [d_t] + speeds_t
+            speeds_r = [d_r] + speeds_r
+            if len(speeds_t) > maxelements:
+                speeds_t = speeds_t[:maxelements]
+                speeds_r = speeds_r[:maxelements]
+
+            # Swap for next cycle.
+            last_t = now_t
+            last_r = now_r
+            last_t_time = now_t_time
+            last_r_time = now_r_time
+
+        # Either autoscale (largest visible value = 1) or use user
+        # settings.
+        if user_max_t == -1:
+            speeds_max_t = max(speeds_t[:width])
+        else:
+            speeds_max_t = user_max_t * 1000.0
+
+        if user_max_r == -1:
+            speeds_max_r = max(speeds_r[:width])
+        else:
+            speeds_max_r = user_max_r * 1000.0
+
+        if not asym and user_max_t == -1 and user_max_r == -1:
+            speeds_max_t = max(speeds_max_t, speeds_max_r)
+            speeds_max_r = speeds_max_t
+
+        # Draw the graphs.
+        avail_t = (height / 2) - 2
+        avail_r = height - (height / 2 + 1) - 2
+        for i in range(width):
+            if i < len(speeds_t) and speeds_max_t > 0:
+                if user_max_t == -1:
+                    sample = speeds_t[i]
+                else:
+                    sample = min(speeds_t[i], speeds_max_t)
+                line_height = (float(sample) / speeds_max_t) * avail_t
+                line_height = int(line_height)
+                line_y = 2 + avail_t - line_height
+                line_x = width - i - 1
+                noerror(win.vline, line_y, line_x, ' ', line_height,
+                          curses.color_pair(1) | curses.A_REVERSE)
+
+            if i < len(speeds_r) and speeds_max_r > 0:
+                if user_max_r == -1:
+                    sample = speeds_r[i]
+                else:
+                    sample = min(speeds_r[i], speeds_max_r)
+                line_height = (float(sample) / speeds_max_r) * avail_r
+                line_height = int(line_height)
+                line_y = (height / 2) + 1
+                line_x = width - i - 1
+                noerror(win.vline, line_y, line_x, ' ', line_height,
+                          curses.color_pair(2) | curses.A_REVERSE)
+
+        # Draw average lines.
+        average_t = sum(speeds_t[:width]) / float(min(len(speeds_t), width))
+        average_r = sum(speeds_r[:width]) / float(min(len(speeds_r), width))
+
+        if speeds_max_t > 0:
+            base_y = height / 2
+            offset = int(-(average_t / speeds_max_t) * avail_t)
+            noerror(win.hline, max(int(base_y + offset), 2), 0,
+                      curses.ACS_HLINE, width, curses.color_pair(1))
+
+        if speeds_max_r > 0:
+            base_y = height / 2
+            offset = int((average_r / speeds_max_r) * avail_r)
+            noerror(win.hline, min(int(base_y + offset), height - 3), 0,
+                      curses.ACS_HLINE, width, curses.color_pair(2))
+
+        # Draw upper status line.
+        average = 'Avg T: {:,.3f}KB/s, Avg R: {:,.3f}KB/s'.format(
+                  average_t / 1000, average_r / 1000)
+        totalsum = 'Sum T: {:,.3f}MB, Sum R: {:,.3f}MB'.format(
+                (now_t - first_t) / 1e6, (now_r - first_r) / 1e6)
+        noerror(win.addstr, 0, 0, ' ' + iface + ', ' + totalsum)
+        noerror(win.addstr, 0, width - len(average) - 1, average)
+
+        # Draw lower status line.
+        d_t_kilo = d_t / 1000
+        d_r_kilo = d_r / 1000
+        max_t_kilo = max(speeds_t[:width]) / 1000
+        max_r_kilo = max(speeds_r[:width]) / 1000
+        maximum = ' Max T: {:,.3f}KB/s, Max R: {:,.3f}KB/s'.format(
+                  max_t_kilo, max_r_kilo)
+        current = 'Cur T: {:,.3f}KB/s, Cur R: {:,.3f}KB/s'.format(
+                  d_t_kilo, d_r_kilo)
+        noerror(win.addstr, height - 1, 0, maximum)
+        noerror(win.addstr, height - 1, width - len(current) - 1, current)
+
+        # Draw dividing lines.
+        noerror(win.hline, 1, 0, curses.ACS_HLINE, width)
+        noerror(win.hline, height / 2, 0, ' ', width,
+                curses.A_BOLD | curses.A_REVERSE)
+        noerror(win.hline, height - 2, 0, curses.ACS_HLINE, width)
+
+        # Refresh window and sleep until the next cycle begins.
+        win.refresh()
+        curses.napms(250)
+
+
+if __name__ == '__main__':
+    parser = OptionParser(usage='usage: %prog [options]')
+    parser.add_option('-t', '--max_t', dest='max_t',
+                      help='Maximum scale for upstream, in ' +
+                      'kilobytes per second. -1 = autoscale. ' +
+                      'Defaults to %default.', default=-1, type='int')
+    parser.add_option('-r', '--max_r', dest='max_r',
+                      help='Maximum scale for downstream, in ' +
+                      'kilobytes per second. -1 = autoscale. ' +
+                      'Defaults to %default.', default=-1, type='int')
+    parser.add_option('-d', '--delta', dest='time_delta',
+                      help='Time to wait between two measurements, ' +
+                      'in seconds. Defaults to %default.',
+                      default=5, type='int')
+    parser.add_option('-i', '--iface', dest='iface',
+                      help='Network interface to monitor. Defaults ' +
+                      'to "%default".', default='eth0')
+    parser.add_option('-a', '--asym', dest='asym',
+                      help='Enable asymmetric autoscale. Only valid if ' +
+                      'MAX_T and MAX_R are unset. Defaults to "%default".',
+                      default=False, action='store_true')
+
+    (options, args) = parser.parse_args()
+
+    try:
+        curses.wrapper(monitor,
+                       options.iface,
+                       options.max_t,
+                       options.max_r,
+                       options.time_delta,
+                       options.asym)
+    except KeyboardInterrupt:
+        pass

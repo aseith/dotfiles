@@ -1,0 +1,90 @@
+#!/usr/bin/lua
+
+function first_line(f)
+    local fp = io.open(f)
+    if not fp
+    then
+        return nil
+    end
+
+    local content = fp:read("*l")
+    fp:close()
+    return content
+end
+
+bat = io.popen("sh -c 'echo /sys/class/power_supply/BAT?'"):read()
+present = first_line(bat .. "/present")
+if present == "1"
+then
+	-- XXX shorten this, lots of duplicated code
+
+	status = first_line(bat .. "/status")
+	rate = first_line(bat .. "/current_now")
+	if rate
+	then
+		ratev = first_line(bat .. "/voltage_now")
+		rem = first_line(bat .. "/charge_now")
+		tot = first_line(bat .. "/charge_full")
+
+		hrs_left = 0
+		if status == "Charging"
+		then
+			status_sym = "(+)"
+			hrs_left = (tot - rem) / rate
+		elseif status == "Discharging"
+		then
+			status_sym = "(-)"
+			hrs_left = rem / rate
+		else
+			status_sym = "(.)"
+		end
+
+		if hrs_left > 1000
+		then
+			hrs = 0
+			min = 0
+		else
+			hrs = math.floor(hrs_left)
+			min = (hrs_left - hrs) * 60
+		end
+
+		time = string.format("%02d:%02d", hrs, min)
+		perc = string.format("%d%%", (rem / tot) * 100)
+		watt = string.format("%.2fW", (rate * ratev) / 1e12)
+	else
+		energy_now = first_line(bat .. "/energy_now")      -- µWh
+		energy_full = first_line(bat .. "/energy_full")    -- µWh
+		power_now = first_line(bat .. "/power_now")        -- µW
+
+		hrs_left = 0
+		if status == "Charging"
+		then
+			status_sym = "(+)"
+			hrs_left = (energy_full - energy_now) / power_now
+		elseif status == "Discharging"
+		then
+			status_sym = "(-)"
+			hrs_left = energy_now / power_now
+		else
+			status_sym = "(.)"
+		end
+
+		if hrs_left > 1000
+		then
+			hrs = 0
+			min = 0
+		else
+			hrs = math.floor(hrs_left)
+			min = (hrs_left - hrs) * 60
+		end
+
+		time = string.format("%02d:%02d", hrs, min)
+		perc = string.format("%d%%", energy_now / energy_full * 100)
+		watt = string.format("%.2fW", power_now / 1e6)
+	end
+
+	text = watt .. " " .. perc .. " " .. time .. " " .. status_sym
+	print(text)
+else
+	os.exit(1)
+end

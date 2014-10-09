@@ -1,0 +1,14 @@
+#!/bin/bash
+
+term="$@"
+term=${term// /%20}
+
+(
+	echo '<html><body>'
+
+	curl -s "http://dict.leo.org/dictQuery/m-vocab/ende/de.html?search=$term" |
+	sed '1,/\/colgroup/d; /thead.*Weitere Aktionen/,$d'
+
+	echo '</table>'
+	echo '</body></html>'
+) | TERM=vt100 elinks /dev/stdin
