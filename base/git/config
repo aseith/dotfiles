@@ -1,0 +1,25 @@
+[core]
+  excludesfile = ~/.config/git/ignore
+
+[alias]
+  st = status -sb
+  ci = commit -v
+  co = checkout
+  ls = log --date=short --pretty=ls
+
+[pretty]
+  ls = format:%C(cyan)%h %C(red)%ad %C(blue)[%an]%C(magenta)%d %C(white)%s
+
+[diff]
+  tool = vimdiff
+  algorithm = patience
+
+[apply]
+  whitespace = strip
+
+[color]
+  ui = true
+
+[push]
+  default = simple
+

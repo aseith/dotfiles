@@ -1,0 +1,12 @@
+[user]
+  name = Alexander Seith
+  email = root@aseith.com
+
+[github]
+  user = aseith
+
+[url "git@github.com:"]
+  insteadOf = gh:
+
+[push]
+  default = upstream
