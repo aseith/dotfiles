@@ -59,4 +59,4 @@ source $ZSH/oh-my-zsh.sh
 export PATH="$HOME/.local/bin:$PATH"
 
 export EDITOR=vim
-export PAGES=less
+export PAGER=less
