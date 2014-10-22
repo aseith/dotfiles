@@ -1,0 +1,5 @@
+
+#!/bin/bash
+mkdir -p $HOME/.ssh
+ln -sf $XDG_CONFIG_HOME/ssh/config $HOME/.ssh/
+chmod 600 $XDG_CONFIG_HOME/ssh/config
