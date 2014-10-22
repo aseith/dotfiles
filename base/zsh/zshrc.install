@@ -9,7 +9,7 @@ if [[ ! -d "$HOME/.config/oh-my-zsh" ]]; then
   echo -e "\033[0;32m==>\033[0m Cloning oh-my-zsh"
   git clone -q git://github.com/robbyrussell/oh-my-zsh.git $HOME/.config/oh-my-zsh
   echo -e "\033[0;32m==>\033[0m Installing zsh"
-  apt-get -q -y --no-install-recommends install zsh
+  sudo apt-get -q -y --no-install-recommends install zsh
   echo -e "\033[0;32m==>\033[0m Changing shell to zsh"
   chsh -s /bin/zsh
 fi
