@@ -1,9 +1,0 @@
-#!/bin/bash
-
-if [[ ! -d $HOME/bin ]]; then
-  mkdir $HOME/bin
-fi
-
-for i in `dirname $0`/*; do
-  ln -s $i $HOME/bin/$i
-done
