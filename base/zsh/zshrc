@@ -56,14 +56,25 @@ source $ZSH/oh-my-zsh.sh
 
 # User configuration
 
+export LANG=en_US
 export PATH="$HOME/.local/bin:$HOME/.config/bin-pub:$PATH"
-
 export EDITOR=vim
+export VISUAL=vim
 export PAGER=less
-
 export TERM=xterm-256color
-
-# Specify vimrc path
+export HISTFILE=$XDG_CONFIG_HOME/.history
+export HISTFILESIZE=50000
+export HISTSIZE=50000
 export VIMINIT='let $MYVIMRC="$XDG_CONFIG_HOME/vim/config.vim" | source $MYVIMRC'
 
-export INPUTRC="$XDG_CONFIG_HOME/bash/inputrc"
+# No beeps
+setopt NO_BEEP
+# Ignore duplicates in history
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_ALL_DUPS
+# Remove blanks
+setopt HIST_REDUCE_BLANKS
+# Append
+setopt APPEND_HISTORY
+# Share history between shells
+setopt SHARE_HISTORY
