@@ -1,0 +1,2 @@
+# Extend path for gems 
+export PATH="$HOME/.local/gems/bin:$PATH"
