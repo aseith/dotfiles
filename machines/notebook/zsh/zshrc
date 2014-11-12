@@ -1,3 +1,6 @@
 # Extend path for gems 
 export GEM_HOME="$HOME/.local/gems"
 export PATH="$HOME/.local/gems/bin:$PATH"
+
+# Fix keyboard
+setxkbmap -model pc105 -layout de
