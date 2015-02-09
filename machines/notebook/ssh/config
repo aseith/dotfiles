@@ -1,4 +1,0 @@
-Host router
-  ProxyCommand ssh -q -l aseith as0.aseith.com nc -q0 localhost 2222  
-  User alx
-  IdentityFile ~/.ssh/id_rsa_router
