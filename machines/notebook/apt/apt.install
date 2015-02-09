@@ -6,14 +6,11 @@ echo -e "\033[0;32m==>\033[0m Adding additional repositories..."
 sudo add-apt-repository -y ppa:libreoffice/ppa
 sudo add-apt-repository -y ppa:git-core/ppa
 sudo add-apt-repository -y ppa:ansible/ansible
+sudo add-apt-repository -y "deb http://dl.google.com/linux/chrome/deb/ stable main"
 echo -e "\033[0;32m==>\033[0m Updating apt cache..."
-sudo apt-get update
+sudo apt-get -y --force-yes update
 echo -e "\033[0;32m==>\033[0m Upgrading packages..."
-sudo apt-get full-upgrade
+sudo apt-get -y --force-yes full-upgrade
 echo -e "\033[0;32m==>\033[0m Installing packages..."
-sudo apt-get install -y sane-utils git screen netpbm ansible clipit nautilus-dropbox vlc ubuntu-restricted-extras terminator keepassx virtualbox
-echo -e "\033[0;32m==>\033[0m Installing Google Chrome..."
 wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-sudo sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
-sudo apt-get update
-sudo apt-get install -y google-chrome
+sudo apt-get install -y sane-utils git screen netpbm ansible clipit nautilus-dropbox vlc ubuntu-restricted-extras terminator keepassx virtualbox virtualbox-guest-additions-iso curl google-chrome-stable
