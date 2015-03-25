@@ -13,4 +13,4 @@ echo -e "\033[0;32m==>\033[0m Upgrading packages..."
 sudo apt-get -y --force-yes full-upgrade
 echo -e "\033[0;32m==>\033[0m Installing packages..."
 wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-sudo apt-get install -y sane-utils git screen netpbm ansible clipit nautilus-dropbox vlc ubuntu-restricted-extras terminator keepassx virtualbox virtualbox-guest-additions-iso curl google-chrome-stable kpcli ncdu lft python-pip libav-tools ubuntu-restricted-extras youtube-dl 
+sudo apt-get install -y sane-utils git screen netpbm ansible clipit nautilus-dropbox vlc ubuntu-restricted-extras terminator keepassx virtualbox virtualbox-guest-additions-iso curl google-chrome-stable libterm-readline-gnu-perl kpcli ncdu lft python-pip libav-tools ubuntu-restricted-extras youtube-dl 
