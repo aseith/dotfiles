@@ -1,0 +1,8 @@
+#!/bin/bash
+
+echo -e "\033[0;32m==>\033[0m Applying ufw rules..."
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22000/tcp
+sudo ufw allow 21025/tcp
+sudo ufw enable
