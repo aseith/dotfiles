@@ -1,3 +1,1 @@
-# todo.txt stuff
-export TODOTXT_DEFAULT_ACTION=ls
-alias t='todo.sh -d ~/Dropbox-encfs/work/todo/config'
+# empty

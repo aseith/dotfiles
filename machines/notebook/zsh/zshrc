@@ -2,5 +2,6 @@
 export GEM_HOME="$HOME/.local/gems"
 export PATH="$HOME/.local/gems/bin:$PATH"
 
-# Fix keyboard
-setxkbmap -model pc105 -layout de
+export WORKON_HOME=$HOME/.virtualenvs
+export PROJECT_HOME=$HOME/Projects
+source /usr/local/bin/virtualenvwrapper.sh
